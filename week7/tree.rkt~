@@ -1,0 +1,60 @@
+#lang racket
+(define (tree? t)
+  (or (null? t) (and (list? t) (= (length t) 3) (tree? (cadr t)) (tree? (caddr t)))))
+(define empty-tree '())
+(define (make-tree root left right) (list root left right))
+(define (make-leaf root) (make-tree root empty-tree empty-tree))
+(define root-tree car)
+(define left-tree cadr)
+(define right-tree caddr)
+(define empty-tree? null?)
+
+(define example (make-tree 1
+                           (make-tree 3 (make-leaf 8) empty-tree)
+                           (make-tree 7 empty-tree (make-tree 9 (make-leaf 10) (make-leaf 11)))))
+(define example-bst (make-tree 1
+                               (make-tree 3 (make-leaf 1) (make-tree 6 (make-leaf 4) (make-leaf 7)))
+                               (make-tree 10 empty-tree (make-tree 14 (make-leaf 13) empty-tree))))
+(define (member-tree? x tree)
+  (cond
+    ((empty-tree? tree) #f)
+    ((equal? (root-tree tree) x) #t)
+    (else (or (member-tree? x (left-tree tree)) (member-tree? x (right-tree tree))))))
+(member-tree? 8 example)
+(member-tree? 5 example)
+
+(define (sum-tree tree)
+  (cond
+    ((empty-tree? tree) 0)
+    (else (+ (root-tree tree) (sum-tree (left-tree tree)) (sum-tree (right-tree tree)))))
+)
+(sum-tree example)
+
+(define (tree-level f tree)
+  (define (tree-level-helper n tree i)
+    (cond
+      ((empty-tree? tree) '())
+      ((= i n) (list (root-tree tree)))
+      (else (append (tree-level-helper n (left-tree tree) (+ i 1)) (tree-level-helper n (right-tree tree) (+ i 1))))))
+  (tree-level-helper f tree 0))
+(define (tree-map f tree)
+  (if (empty-tree? tree)
+      '()
+      (make-tree (f (root-tree tree)) (tree-map f (left-tree tree)) (tree-map f (right-tree tree)))))
+(define (f x)
+  (+ x 1))
+(tree-map f example)
+
+(define (tree->list tree)
+  (if (empty-tree? tree) '()
+      (append (tree->list (left-tree tree)) (list (root-tree tree)) (tree->list (right-tree tree)))))
+
+(tree->list example)
+
+
+(define (bst-insert x tree)
+  (cond
+    ((empty-tree? tree) (make-leaf x))
+    ((> (root-tree) x) (make-tree (root-tree tree) (bst-insert x (left-tree tree)) (right-tree tree)))
+    (else (make-tree (root-tree tree) (left-tree tree) (bst-insert x (right-tree tree))))))
+

@@ -1,0 +1,47 @@
+(define (accumulate op term init a next b)  
+  (define (loop i)
+      (if (< i b)
+          (op (term i) (loop (next i)))
+          init
+      )
+  )
+  (loop a)
+)
+
+(define (squares n)
+  (define (id x) x)
+  (define (1+ x) (+ x 1))
+  (define (1- x) (- x 1))
+  (define cols (* 4 n))
+
+  (define (print start end sign1 sign2)
+    (define (op1 x y) (display sign1))
+    (define (op2 x y) (display sign1)(display sign2))
+    (if (eq? sign2 "")
+        (accumulate op1 id 0 start 1+ end)
+        (accumulate op2 id 0 start 1+ end)
+    )
+  )
+
+  (define (build compare current end process sign1 sign2)
+    (if (compare current end)
+        (begin
+          (print 0 current #\│ #\space)
+          (print 0 1 sign1 "")
+          (print 1 (- cols (* 4 current) 2) #\─ "")
+          (print 0 1 sign2 "")
+          (print 0 current #\space #\│)
+          (display #\newline)
+          (build compare (process current) end process sign1 sign2)
+        )
+        (display "")
+    )
+  )
+
+  (begin
+    (build < 0 n 1+ #\┌ #\┐)
+    (build >= (1- n) 0 1- #\└ #\┘)
+  )
+)
+ 
+(squares 10)

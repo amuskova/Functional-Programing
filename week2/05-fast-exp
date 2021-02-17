@@ -1,0 +1,22 @@
+#lang racket
+(require rackunit)
+(require rackunit/text-ui)
+
+(define (expt x n)
+  (define (expt-iter ans c)
+    (if ( > c n)
+        ans
+        (expt-iter (* x ans) (+ c 1))))
+   (expt-iter 1 1)
+)
+;(expt -4 -2)
+(define tests
+  (test-suite "expt tests"
+    (check-equal? (expt 4 4) 256)
+    (check-equal? (expt 29139123 0) 1)
+    (check-equal? (expt 3 4) 81)
+    (check-equal? (expt 2 1) 2)
+  )
+)
+
+(run-tests tests 'verbose)

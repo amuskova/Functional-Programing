@@ -1,0 +1,61 @@
+#lang racket
+
+(#%require racket/string)
+(define (next x) (+ x 1))
+(define (previous x) (- x 1))
+
+(define (is-digit? c) (and (char>=? c #\0) (char<=? c #\9)))
+(define (is-empty? c) (char=? c #\*))
+(define (is-space? c) (char=? c #\space))
+(define (is-leftscope? c) (char=? c #\{))
+(define (is-rightscope? c) (char=? c #\}))
+
+(define (get-char str i)
+  (if (or (= (string-length str) 0) (< i 0) (>= i (string-length str)))
+      #\null
+      (string-ref str i))
+)
+
+
+(define (tree? str)
+  (define (loop str i len scopes)
+    (let
+      (
+        (curr (get-char str i))
+      )
+      (cond(
+        ((not (or (is-digit? curr) (is-empty? curr) (is-space? curr) (is-leftscope? curr) (is-rightscope? curr))) #f) 
+        ((and (= i 0) (not (is-leftscope? curr))) #f)
+        ((and (= i (- len 1)) (not (is-rightscope? curr))) #f)
+        ((and (= i (- len 1)) (is-rightscope? curr) (= scopes 0)) #t)
+        ((and (is-leftscope? curr) (is-leftscope? (string-ref str (next i)))) #f)
+        ((is-leftscope? curr) (loop str (next i) len (+ scopes 1)))
+        ((is-rightscope? curr) (loop str (next i) len (- scopes 1)))
+        ;(else (loop str (next i) len scopes))  
+      )
+     )
+    )
+   )
+  
+  (define normalized-string (string-normalize-spaces str))
+  (if (= (string-length normalized-string) 0)
+     #t
+     (loop normalized-string 0 (string-length normalized-string) 0)
+  )
+  )
+(define (tokenize l)
+  (let loop ((t '())
+             (l l))
+    (if (pair? l)
+        (let ((c (car l)))
+          (if (char=? c #\space)
+              (cons (reverse t) (loop '() (cdr l)))
+              (loop (cons (car l) t) (cdr l))))
+        (if (null? t)
+            '()
+            (list (reverse t))))))
+
+(define (string-split s)
+  (map list->string (tokenize (string->list s))))
+ 
+;(expr-valid? "10   + 20")

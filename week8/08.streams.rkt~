@@ -1,0 +1,125 @@
+#lang racket
+
+(define a '(1 2 3))
+
+; 1 -> 2 -> 3 -> '()
+; 1 -> delayed
+; head -> tail (който не се смята веднага)
+
+
+(define-syntax my-delay
+  (syntax-rules () ((my-delay expr) (lambda () expr))))
+
+
+(define (my-force p) (p))
+
+(define-syntax stream-cons
+  (syntax-rules () ((stream-cons x xs) (cons x (my-delay xs)))))
+
+; (stream-cons 1 '(2)) -> (cons 1 (my-delay '(2)))
+
+
+(define (ones) (stream-cons 1 (ones)))
+
+(define (head s) (car s))
+(define (tail s) (my-force (cdr s)))
+(define empty-stream '())
+(define (stream-empty? s)
+  (null? s))
+
+
+; искаме поток от всички естествени числа
+(define (naturals)
+  (define (naturals-from x)
+    (stream-cons x (naturals-from (+ x 1)))
+  )
+  (naturals-from 0) ; (0, ?????)
+)
+
+(define (compare-streams s1 s2)
+  (cond ((and (stream-empty? s1) (stream-empty? s2)) #t)
+        ((or (and (stream-empty? s1) (not (stream-empty? s2)))
+             (and (stream-empty? s2) (not (stream-empty? s1)))) #f)
+        ((equal? (head s1) (head s2)) (compare-streams (tail s1) (tail s2)))
+        (else #f))
+)
+
+(define (stream-range s e)
+  (if (> s e)
+      empty-stream
+      (stream-cons s (stream-range (+ s 1) e))))
+
+; искаме да вземем n-тия елемент на поток
+(define (nth s n)
+  (cond
+    ((or (stream-empty? s) (< n 0)) #f)
+    ((= n 0) (head s))
+    (else
+     (nth (tail s) (- n 1))))
+)
+;(nth (naturals) -8)
+; първите n елемента на даден поток
+(define (stream-take s n)
+  (cond
+    ((stream-empty? s) empty-stream)
+    ((= n 0) (stream-cons (head s) empty-stream))
+    (else
+     (stream-cons (head s) (stream-take (tail s) (- n 1)))))
+)
+;(stream-take (naturals) 5)
+; превръщаме поток в списък
+(define (stream->list s)
+  (cond
+    ((stream-empty? s) '())
+    (else
+     (cons (head s) (stream->list (tail s)))))
+)
+;(stream->list (stream-cons 5 (stream-cons 8 (stream-cons -12334 '()))))
+; филтрираме елементите на поток
+(define (stream-filter p? s)
+  (cond
+    ((stream-empty? s) empty-stream)
+    ((p? (head s)) (stream-cons (head s) (stream-filter p? (tail s))))
+    (else
+     (stream-filter p? (tail s))))
+)
+
+; прилагаме функция върху всеки елемент на поток
+(define (stream-map f s)
+  (cond
+    ((stream-empty? s) empty-stream)
+    (else
+     (stream-cons (f (head s)) (stream-map f (tail s)))))
+)
+
+; конкатенираме два потока
+(define (stream-append s t)
+  (cond
+    ((stream-empty? s) t)
+    (else
+     (stream-cons (head s) (stream-append (tail s) t))))
+)
+
+; пропускаме първите n елемента на даден поток
+(define (stream-drop s n)
+  (cond
+    ((stream-empty? s) empty-stream)
+    ((= n 0) s)
+    (else
+     (stream-drop (tail s) (- n 1))))
+)
+
+; правим безкраен поток от вида (x f(x) f(f(x)) f(f(f(x))) ...)
+(define (iterate f x)
+  (void)
+)
+
+; правим поток от вида (nv op(nv, a1) op(op(nv, a1), a2) ...)
+(define (scanl op nv stream)
+  (void)
+)
+
+; поток от всички прости числа
+(define (primes)
+  (void)
+)
